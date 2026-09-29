@@ -286,7 +286,7 @@ Original UIは原本として保持し、実装時に確定したUI・画面遷�
 
 `resources/views/genres/show.blade.php` の「一覧に戻る」リンクが
 書籍一覧 `books.index` へ遷移する記述となっていたため、
-ジャンル一覧 `genres.index` へ戻るよう修正しています。
+ジャンル管理 `genres.index` へ戻るよう修正しています。
 
 本修正は、クライアント確認により提供Blade側の誤りと確認されたための修正であり、
 機能要件の変更ではありません。

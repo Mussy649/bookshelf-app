@@ -31,8 +31,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('books', BookController::class)
         ->except(['index', 'show']);
 
-    Route::get('/genres', [GenreController::class, 'index'])
-        ->name('genres.index');
+    Route::resource('genres', GenreController::class);
 
     Route::get('/favorites', [FavoriteController::class, 'index'])
         ->name('favorites.index');
