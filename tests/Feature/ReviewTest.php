@@ -333,4 +333,43 @@ class ReviewTest extends TestCase
             'comment' => '更新前のコメントです。',
         ]);
     }
+
+    public function test_reviews_are_displayed_latest_first(): void
+    {
+        $user = User::factory()->create();
+        $book = Book::factory()->create();
+
+        $oldReview = new Review;
+        $oldReview->user_id = $user->id;
+        $oldReview->book_id = $book->id;
+        $oldReview->rating = 3;
+        $oldReview->comment = '古いレビューです。';
+        $oldReview->created_at = now()->subDays(2);
+        $oldReview->save();
+
+        $middleReview = new Review;
+        $middleReview->user_id = $user->id;
+        $middleReview->book_id = $book->id;
+        $middleReview->rating = 4;
+        $middleReview->comment = '中間のレビューです。';
+        $middleReview->created_at = now()->subDay();
+        $middleReview->save();
+
+        $latestReview = new Review;
+        $latestReview->user_id = $user->id;
+        $latestReview->book_id = $book->id;
+        $latestReview->rating = 5;
+        $latestReview->comment = '最新のレビューです。';
+        $latestReview->created_at = now();
+        $latestReview->save();
+
+        $response = $this->get(route('books.show', $book));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([
+            '最新のレビューです。',
+            '中間のレビューです。',
+            '古いレビューです。',
+        ]);
+    }
 }
