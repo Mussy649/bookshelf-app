@@ -10,22 +10,6 @@ use App\Models\Review;
 class ReviewController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
     public function store(StoreReviewRequest $request, Book $book)
@@ -42,14 +26,6 @@ class ReviewController extends Controller
         return redirect()
             ->route('books.show', $book)
             ->with('success', 'レビューを投稿しました。');
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
     }
 
     /**

@@ -31,9 +31,9 @@ class StoreReviewRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'rating.required' => '星をクリックして1～5段階の評価を選択してください。',
-            'rating.integer' => '星をクリックして1～5段階の評価を選択してください。',
-            'rating.between' => '星をクリックして1～5段階の評価を選択してください。',
+            'rating.required' => '★をクリックして1～5段階の評価を選択してください。',
+            'rating.integer' => '★をクリックして1～5段階の評価を選択してください。',
+            'rating.between' => '★をクリックして1～5段階の評価を選択してください。',
 
             'comment.string' => 'コメントは1000文字以内で入力してください。',
             'comment.max' => 'コメントは1000文字以内で入力してください。',
