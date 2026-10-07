@@ -109,7 +109,7 @@ class AuthTest extends TestCase
      * ログアウトできる
      *
      * Fortify が登録する POST /logout により認証状態が解除される。
-     * ログアウト後は /login へリダイレクトされる。
+     * ログアウト後は / へリダイレクトされ、/ は /books へ転送される。
      */
     public function test_authenticated_user_can_logout(): void
     {
@@ -117,7 +117,7 @@ class AuthTest extends TestCase
 
         $response = $this->actingAs($user)->post('/logout');
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/');
 
         $this->assertGuest();
     }
