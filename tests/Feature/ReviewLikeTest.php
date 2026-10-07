@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Book;
 use App\Models\Review;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -84,6 +85,54 @@ class ReviewLikeTest extends TestCase
 
         $this->assertDatabaseMissing('review_likes', [
             'user_id' => $user->id,
+            'review_id' => $review->id,
+        ]);
+    }
+
+    public function test_duplicate_review_like_is_prevented(): void
+    {
+        $reviewer = User::factory()->create();
+        $liker = User::factory()->create();
+        $book = Book::factory()->create();
+
+        $review = Review::create([
+            'user_id' => $reviewer->id,
+            'book_id' => $book->id,
+            'rating' => 5,
+            'comment' => 'UNIQUE制約テスト用レビューです。',
+        ]);
+
+        $liker->likedReviews()->attach($review->id);
+
+        $this->assertDatabaseHas('review_likes', [
+            'user_id' => $liker->id,
+            'review_id' => $review->id,
+        ]);
+
+        $this->expectException(QueryException::class);
+
+        $liker->likedReviews()->attach($review->id);
+    }
+
+    public function test_guest_cannot_toggle_review_like(): void
+    {
+        $reviewer = User::factory()->create();
+        $book = Book::factory()->create();
+
+        $review = Review::create([
+            'user_id' => $reviewer->id,
+            'book_id' => $book->id,
+            'rating' => 5,
+            'comment' => '未ログインいいねテスト用レビューです。',
+        ]);
+
+        $response = $this->post(
+            route('reviews.like', $review)
+        );
+
+        $response->assertRedirect('/login');
+
+        $this->assertDatabaseMissing('review_likes', [
             'review_id' => $review->id,
         ]);
     }

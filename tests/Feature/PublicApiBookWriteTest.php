@@ -276,5 +276,61 @@ class PublicApiBookWriteTest extends TestCase
         $response->assertStatus(404);
     }
 
-    // Write系6テスト
+    public function test_public_api_returns_422_when_required_fields_are_missing(): void
+    {
+        $response = $this->postJson(
+            route('api.v1.books.store'),
+            []
+        );
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonValidationErrors([
+                'user_id',
+                'title',
+                'author',
+                'isbn',
+                'published_date',
+                'genres',
+            ]);
+
+        $this->assertDatabaseCount('books', 0);
+    }
+
+    public function test_public_api_returns_404_when_updating_nonexistent_book(): void
+    {
+        $genre = Genre::create([
+            'name' => 'テストジャンル',
+        ]);
+
+        $response = $this->putJson(
+            '/api/v1/books/99999',
+            [
+                'title' => '存在しない書籍の更新',
+                'author' => 'テスト著者',
+                'isbn' => '9781234567897',
+                'published_date' => '2026-09-30',
+                'description' => null,
+                'image_url' => null,
+                'genres' => [$genre->id],
+            ]
+        );
+
+        $response->assertStatus(404);
+    }
+
+    public function test_public_api_store_returns_japanese_validation_messages(): void
+    {
+        $response = $this->postJson(
+            route('api.v1.books.store'),
+            []
+        );
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonPath('errors.title.0', 'タイトルは必須です。')
+            ->assertJsonPath('errors.user_id.0', '登録者IDは必須です。');
+    }
+
+    // Write系9テスト
 }

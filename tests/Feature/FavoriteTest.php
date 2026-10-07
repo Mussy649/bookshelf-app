@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Book;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -125,5 +126,51 @@ class FavoriteTest extends TestCase
             return $paginator->count() === 1
                 && $paginator->total() === 11;
         });
+    }
+
+    public function test_guest_cannot_toggle_favorite(): void
+    {
+        $book = Book::factory()->create();
+
+        $response = $this->post(
+            route('favorites.toggle', $book)
+        );
+
+        $response->assertRedirect('/login');
+
+        $this->assertDatabaseMissing('favorites', [
+            'book_id' => $book->id,
+        ]);
+    }
+
+    public function test_duplicate_favorite_is_prevented(): void
+    {
+        $user = User::factory()->create();
+        $book = Book::factory()->create();
+
+        $user->favoriteBooks()->attach($book->id);
+
+        $this->assertDatabaseHas('favorites', [
+            'user_id' => $user->id,
+            'book_id' => $book->id,
+        ]);
+
+        $this->expectException(QueryException::class);
+
+        $user->favoriteBooks()->attach($book->id);
+    }
+
+    public function test_favorites_page_displays_empty_state_when_user_has_no_favorites(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(
+            route('favorites.index')
+        );
+
+        $response->assertOk();
+        $response->assertViewIs('favorites.index');
+        $response->assertSee('お気に入りに登録された書籍はありません。');
+        $response->assertSee('書籍一覧を見る');
     }
 }

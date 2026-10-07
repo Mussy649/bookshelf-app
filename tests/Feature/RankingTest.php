@@ -110,4 +110,15 @@ class RankingTest extends TestCase
         $response->assertDontSee('ランキング対象外の低評価本');
         $response->assertDontSee('レビューなしの本');
     }
+
+    public function test_ranking_displays_empty_state_when_no_books_have_reviews(): void
+    {
+        Book::factory()->create();
+
+        $response = $this->get(route('ranking.index'));
+
+        $response->assertOk();
+        $response->assertViewIs('ranking.index');
+        $response->assertSee('まだレビューが投稿された書籍がありません。');
+    }
 }

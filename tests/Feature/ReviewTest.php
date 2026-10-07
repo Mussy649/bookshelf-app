@@ -334,6 +334,60 @@ class ReviewTest extends TestCase
         ]);
     }
 
+    public function test_guest_cannot_post_review(): void
+    {
+        $book = Book::factory()->create();
+
+        $response = $this->post(
+            route('reviews.store', $book),
+            [
+                'rating' => 5,
+                'comment' => '未ログイン投稿テストです。',
+            ]
+        );
+
+        $response->assertRedirect('/login');
+
+        $this->assertDatabaseMissing('reviews', [
+            'book_id' => $book->id,
+        ]);
+    }
+
+    public function test_deleting_review_cascades_review_likes(): void
+    {
+        $owner = User::factory()->create();
+        $liker = User::factory()->create();
+        $book = Book::factory()->create();
+
+        $review = new Review;
+        $review->user_id = $owner->id;
+        $review->book_id = $book->id;
+        $review->rating = 4;
+        $review->comment = 'cascadeテスト用レビューです。';
+        $review->save();
+
+        $liker->likedReviews()->attach($review->id);
+
+        $this->assertDatabaseHas('review_likes', [
+            'user_id' => $liker->id,
+            'review_id' => $review->id,
+        ]);
+
+        $response = $this->actingAs($owner)->delete(
+            route('reviews.destroy', $review)
+        );
+
+        $response->assertRedirect(route('books.show', $book));
+
+        $this->assertDatabaseMissing('reviews', [
+            'id' => $review->id,
+        ]);
+
+        $this->assertDatabaseMissing('review_likes', [
+            'review_id' => $review->id,
+        ]);
+    }
+
     public function test_reviews_are_displayed_latest_first(): void
     {
         $user = User::factory()->create();

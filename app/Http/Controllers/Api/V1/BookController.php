@@ -3,18 +3,20 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\ApiBookIndexRequest;
 use App\Http\Requests\Api\StoreBookRequest;
 use App\Http\Requests\Api\UpdateBookRequest;
 use App\Models\Book;
-use Illuminate\Http\Request;
 
 class BookController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(ApiBookIndexRequest $request)
     {
+        $perPage = $request->input('per_page', 10);
+
         $books = Book::query()
             ->with('genres')
             ->withAvg('reviews', 'rating')
@@ -26,13 +28,13 @@ class BookController extends Controller
                         ->orWhere('isbn', 'like', "%{$keyword}%");
                 });
             })
-            ->when($request->genre_id, function ($query, $genreId) {
+            ->when($request->genre, function ($query, $genreId) {
                 $query->whereHas('genres', function ($query) use ($genreId) {
                     $query->where('genres.id', $genreId);
                 });
             })
             ->latest()
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
         return response()->json($books);
