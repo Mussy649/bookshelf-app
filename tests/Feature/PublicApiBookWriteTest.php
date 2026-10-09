@@ -7,6 +7,7 @@ use App\Models\Genre;
 use App\Models\Review;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class PublicApiBookWriteTest extends TestCase
@@ -16,6 +17,8 @@ class PublicApiBookWriteTest extends TestCase
     public function test_public_api_can_create_book(): void
     {
         $user = User::factory()->create();
+
+        Sanctum::actingAs($user);
 
         $genreA = Genre::create([
             'name' => 'ジャンルA',
@@ -28,7 +31,6 @@ class PublicApiBookWriteTest extends TestCase
         $response = $this->postJson(
             route('api.v1.books.store'),
             [
-                'user_id' => $user->id,
                 'title' => 'API登録テスト書籍',
                 'author' => '登録テスト著者',
                 'isbn' => '9781234567897',
@@ -68,6 +70,8 @@ class PublicApiBookWriteTest extends TestCase
     {
         $user = User::factory()->create();
 
+        Sanctum::actingAs($user);
+
         $genre = Genre::create([
             'name' => 'ジャンルA',
         ]);
@@ -85,7 +89,6 @@ class PublicApiBookWriteTest extends TestCase
         $response = $this->postJson(
             route('api.v1.books.store'),
             [
-                'user_id' => $user->id,
                 'title' => '重複ISBN書籍',
                 'author' => 'テスト著者',
                 'isbn' => '9781234567897',
@@ -108,6 +111,8 @@ class PublicApiBookWriteTest extends TestCase
     public function test_public_api_can_update_book(): void
     {
         $user = User::factory()->create();
+
+        Sanctum::actingAs($user);
 
         $genreA = Genre::create([
             'name' => 'ジャンルA',
@@ -169,6 +174,8 @@ class PublicApiBookWriteTest extends TestCase
     {
         $user = User::factory()->create();
 
+        Sanctum::actingAs($user);
+
         $genre = Genre::create([
             'name' => 'ジャンルA',
         ]);
@@ -226,6 +233,8 @@ class PublicApiBookWriteTest extends TestCase
     {
         $user = User::factory()->create();
 
+        Sanctum::actingAs($user);
+
         $genre = Genre::create([
             'name' => 'ジャンルA',
         ]);
@@ -271,6 +280,10 @@ class PublicApiBookWriteTest extends TestCase
 
     public function test_public_api_returns_404_when_deleting_nonexistent_book(): void
     {
+        $user = User::factory()->create();
+
+        Sanctum::actingAs($user);
+
         $response = $this->deleteJson('/api/v1/books/99999');
 
         $response->assertStatus(404);
@@ -278,6 +291,10 @@ class PublicApiBookWriteTest extends TestCase
 
     public function test_public_api_returns_422_when_required_fields_are_missing(): void
     {
+        $user = User::factory()->create();
+
+        Sanctum::actingAs($user);
+
         $response = $this->postJson(
             route('api.v1.books.store'),
             []
@@ -286,7 +303,6 @@ class PublicApiBookWriteTest extends TestCase
         $response
             ->assertStatus(422)
             ->assertJsonValidationErrors([
-                'user_id',
                 'title',
                 'author',
                 'isbn',
@@ -299,6 +315,10 @@ class PublicApiBookWriteTest extends TestCase
 
     public function test_public_api_returns_404_when_updating_nonexistent_book(): void
     {
+        $user = User::factory()->create();
+
+        Sanctum::actingAs($user);
+
         $genre = Genre::create([
             'name' => 'テストジャンル',
         ]);
@@ -321,6 +341,10 @@ class PublicApiBookWriteTest extends TestCase
 
     public function test_public_api_store_returns_japanese_validation_messages(): void
     {
+        $user = User::factory()->create();
+
+        Sanctum::actingAs($user);
+
         $response = $this->postJson(
             route('api.v1.books.store'),
             []
@@ -328,8 +352,7 @@ class PublicApiBookWriteTest extends TestCase
 
         $response
             ->assertStatus(422)
-            ->assertJsonPath('errors.title.0', 'タイトルは必須です。')
-            ->assertJsonPath('errors.user_id.0', '登録者IDは必須です。');
+            ->assertJsonPath('errors.title.0', 'タイトルは必須です。');
     }
 
     // Write系9テスト
