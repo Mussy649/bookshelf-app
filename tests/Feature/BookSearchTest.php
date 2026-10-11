@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\BookController;
 use App\Models\Book;
-use App\Models\User;
 use App\Models\Genre;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Tests\TestCase;
@@ -168,5 +168,44 @@ class BookSearchTest extends TestCase
 
         $this->assertCount(1, $books);
         $this->assertSame('Laravel開発', $books->first()->title);
+    }
+
+    public function test_search_conditions_are_kept_in_pagination_urls(): void
+    {
+        $user = User::factory()->create();
+
+        $genre = Genre::create([
+            'name' => '技術書',
+        ]);
+
+        for ($i = 1; $i <= 11; $i++) {
+            $book = Book::create([
+                'user_id' => $user->id,
+                'title' => "Laravel本{$i}",
+                'author' => 'テスト著者',
+                'isbn' => sprintf('978%010d', $i),
+                'published_date' => '2026-01-01',
+            ]);
+
+            $book->genres()->attach($genre->id);
+        }
+
+        $request = Request::create('/books', 'GET', [
+            'keyword' => 'Laravel',
+            'genre' => $genre->id,
+            'sort' => 'latest',
+        ]);
+
+        app()->instance('request', $request);
+
+        $view = app(BookController::class)->index($request);
+        $books = $view->getData()['books'];
+
+        $nextPageUrl = $books->nextPageUrl();
+
+        $this->assertNotNull($nextPageUrl);
+        $this->assertStringContainsString('keyword=Laravel', $nextPageUrl);
+        $this->assertStringContainsString('genre='.$genre->id, $nextPageUrl);
+        $this->assertStringContainsString('sort=latest', $nextPageUrl);
     }
 }
