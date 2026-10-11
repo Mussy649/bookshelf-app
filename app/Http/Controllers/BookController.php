@@ -28,6 +28,14 @@ class BookController extends Controller
             });
         }
 
+        if ($request->filled('genre')) {
+            $genreId = $request->input('genre');
+
+            $query->whereHas('genres', function ($query) use ($genreId) {
+                $query->where('genres.id', $genreId);
+            });
+        }
+
         $books = $query
             ->latest()
             ->paginate(10);
