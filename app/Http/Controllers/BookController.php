@@ -8,6 +8,7 @@ use App\Models\Book;
 use App\Models\Genre;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
 
@@ -59,9 +60,9 @@ class BookController extends Controller
                 break;
         }
 
-        $books = $query
-            ->paginate(10)
-            ->withQueryString();
+        /** @var LengthAwarePaginator $books */
+        $books = $query->paginate(10);
+        $books->withQueryString();
 
         $genres = Genre::all();
 

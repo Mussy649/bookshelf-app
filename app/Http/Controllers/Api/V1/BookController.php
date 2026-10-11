@@ -7,6 +7,7 @@ use App\Http\Requests\Api\ApiBookIndexRequest;
 use App\Http\Requests\Api\StoreBookRequest;
 use App\Http\Requests\Api\UpdateBookRequest;
 use App\Models\Book;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class BookController extends Controller
 {
@@ -17,6 +18,7 @@ class BookController extends Controller
     {
         $perPage = $request->input('per_page', 10);
 
+        /** @var LengthAwarePaginator $books */
         $books = Book::query()
             ->with('genres')
             ->withAvg('reviews', 'rating')
@@ -34,8 +36,9 @@ class BookController extends Controller
                 });
             })
             ->latest()
-            ->paginate($perPage)
-            ->withQueryString();
+            ->paginate($perPage);
+
+        $books->withQueryString();
 
         return response()->json($books);
     }
