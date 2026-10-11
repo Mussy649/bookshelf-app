@@ -6,20 +6,35 @@ use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
 use App\Models\Book;
 use App\Models\Genre;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class BookController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request): View
     {
-        $books = Book::with('genres')
-            ->withAvg('reviews', 'rating')
+        $query = Book::with('genres')
+            ->withAvg('reviews', 'rating');
+
+        if ($request->filled('keyword')) {
+            $keyword = $request->input('keyword');
+
+            $query->where(function ($query) use ($keyword) {
+                $query->where('title', 'like', "%{$keyword}%")
+                    ->orWhere('author', 'like', "%{$keyword}%");
+            });
+        }
+
+        $books = $query
             ->latest()
             ->paginate(10);
 
-        return view('books.index', compact('books'));
+        $genres = Genre::all();
+
+        return view('books.index', compact('books', 'genres'));
     }
 
     /**
