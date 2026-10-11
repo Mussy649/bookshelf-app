@@ -28,6 +28,10 @@ Route::get('/books', [BookController::class, 'index'])
     ->name('books.index');
 
 Route::middleware('auth')->group(function () {
+
+    Route::get('/books/isbn/{isbn}', [BookController::class, 'fetchByIsbn'])
+        ->name('books.isbn');
+
     Route::resource('books', BookController::class)
         ->except(['index', 'show']);
 
@@ -47,6 +51,7 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/reviews/{review}/likes', [ReviewLikeController::class, 'toggle'])
         ->name('reviews.like');
+
 });
 
 Route::get('/books/{book}', [BookController::class, 'show'])
