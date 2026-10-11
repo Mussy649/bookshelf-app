@@ -29,7 +29,7 @@ Route::get('/books', [BookController::class, 'index'])
 
 Route::middleware('auth')->group(function () {
 
-    Route::get('/books/isbn/{isbn}', [BookController::class, 'fetchByIsbn'])
+    Route::get('/books/isbn/{isbn}', [BookController::class, 'searchByIsbn'])
         ->name('books.isbn');
 
     Route::resource('books', BookController::class)

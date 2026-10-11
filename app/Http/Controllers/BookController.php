@@ -6,7 +6,9 @@ use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
 use App\Models\Book;
 use App\Models\Genre;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
 
 class BookController extends Controller
@@ -64,6 +66,42 @@ class BookController extends Controller
         $genres = Genre::all();
 
         return view('books.index', compact('books', 'genres'));
+    }
+
+    /**
+     * Search book information by ISBN using Google Books API.
+     */
+    public function searchByIsbn(string $isbn): JsonResponse
+    {
+        $response = Http::get(
+            config('services.google_books.url'),
+            ['q' => "isbn:{$isbn}"]
+        );
+
+        if ($response->failed()) {
+            return response()->json([
+                'error' => '書籍情報の取得に失敗しました。',
+            ], 502);
+        }
+
+        if ($response->json('totalItems', 0) === 0) {
+            return response()->json([
+                'error' => '該当する書籍が見つかりませんでした。',
+            ], 404);
+        }
+
+        $volumeInfo = $response->json('items.0.volumeInfo', []);
+
+        return response()->json([
+            'title' => $volumeInfo['title'] ?? null,
+            'author' => isset($volumeInfo['authors'])
+                ? implode(', ', $volumeInfo['authors'])
+                : null,
+            'isbn' => $isbn,
+            'published_date' => $volumeInfo['publishedDate'] ?? null,
+            'description' => $volumeInfo['description'] ?? null,
+            'image_url' => $volumeInfo['imageLinks']['thumbnail'] ?? null,
+        ]);
     }
 
     /**
