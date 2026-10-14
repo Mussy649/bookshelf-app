@@ -79,6 +79,23 @@ class ReadingPlanTest extends TestCase
         $this->assertDatabaseCount('reading_plans', 1);
     }
 
+    public function test_nonexistent_book_cannot_be_used_for_reading_plan(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(
+            route('reading-plans.store'),
+            [
+                'book_id' => 999999,
+                'target_date' => today()->addDay()->toDateString(),
+            ]
+        );
+
+        $response->assertSessionHasErrors('book_id');
+
+        $this->assertDatabaseCount('reading_plans', 0);
+    }
+
     public function test_index_contains_only_authenticated_users_plans(): void
     {
         $user = User::factory()->create();
@@ -131,6 +148,82 @@ class ReadingPlanTest extends TestCase
         $this->assertEqualsCanonicalizing(
             [$inProgress->id, $completed->id, $expired->id],
             $allPlans->pluck('id')->all()
+        );
+    }
+
+    public function test_invalid_status_filter_is_cleared(): void
+    {
+        $user = User::factory()->create();
+        $book = Book::factory()->create();
+
+        $plan = $this->createPlan($user, $book);
+
+        $response = $this->actingAs($user)->get(
+            route('reading-plans.index', [
+                'status' => 'invalid-status',
+            ])
+        );
+
+        $response->assertOk();
+        $response->assertViewIs('reading-plans.index');
+        $response->assertViewHas('currentStatus', '');
+
+        $response->assertViewHas(
+            'readingPlans',
+            function ($readingPlans) use ($plan) {
+                return $readingPlans->contains('id', $plan->id);
+            }
+        );
+    }
+
+    public function test_authenticated_user_can_view_create_page_with_books_ordered_by_title(): void
+    {
+        $user = User::factory()->create();
+
+        $bookB = Book::factory()->create([
+            'title' => 'B Book',
+        ]);
+
+        $bookA = Book::factory()->create([
+            'title' => 'A Book',
+        ]);
+
+        $response = $this->actingAs($user)->get(
+            route('reading-plans.create')
+        );
+
+        $response->assertOk();
+        $response->assertViewIs('reading-plans.create');
+
+        $response->assertViewHas('books', function ($books) use ($bookA, $bookB) {
+            return $books->pluck('id')->all() === [
+                $bookA->id,
+                $bookB->id,
+            ];
+        });
+    }
+
+    public function test_owner_can_view_reading_plan_edit_page_with_book_loaded(): void
+    {
+        $user = User::factory()->create();
+        $book = Book::factory()->create();
+
+        $plan = $this->createPlan($user, $book);
+
+        $response = $this->actingAs($user)->get(
+            route('reading-plans.edit', $plan)
+        );
+
+        $response->assertOk();
+        $response->assertViewIs('reading-plans.edit');
+
+        $response->assertViewHas(
+            'readingPlan',
+            function ($readingPlan) use ($plan, $book) {
+                return $readingPlan->is($plan)
+                    && $readingPlan->relationLoaded('book')
+                    && $readingPlan->book->is($book);
+            }
         );
     }
 
