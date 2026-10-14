@@ -2,8 +2,10 @@
 
 namespace Tests\Unit;
 
+use App\Enums\ReadingPlanStatus;
 use App\Models\Book;
 use App\Models\Genre;
+use App\Models\ReadingPlan;
 use App\Models\Review;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -64,5 +66,45 @@ class BookTest extends TestCase
 
         $this->assertTrue($book->reviews->contains($review));
         $this->assertCount(1, $book->reviews);
+    }
+
+    public function test_book_belongs_to_many_favorited_by_users(): void
+    {
+        $user = User::factory()->create();
+        $book = Book::factory()->create();
+
+        $book->favoritedByUsers()->attach($user->id);
+
+        $this->assertTrue(
+            $book->favoritedByUsers->contains($user)
+        );
+
+        $this->assertCount(
+            1,
+            $book->favoritedByUsers
+        );
+    }
+
+    public function test_book_has_many_reading_plans(): void
+    {
+        $user = User::factory()->create();
+        $book = Book::factory()->create();
+
+        $plan = ReadingPlan::create([
+            'user_id' => $user->id,
+            'book_id' => $book->id,
+            'target_date' => today()->addDays(7),
+            'status' => ReadingPlanStatus::InProgress,
+            'completed_at' => null,
+        ]);
+
+        $this->assertTrue(
+            $book->readingPlans->contains($plan)
+        );
+
+        $this->assertCount(
+            1,
+            $book->readingPlans
+        );
     }
 }

@@ -11,6 +11,17 @@ class AuthTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_guest_can_view_login_and_register_pages(): void
+    {
+        $this->get('/login')
+            ->assertOk()
+            ->assertViewIs('auth.login');
+
+        $this->get('/register')
+            ->assertOk()
+            ->assertViewIs('auth.register');
+    }
+
     /**
      * 会員登録成功後はログイン画面へ遷移し、未ログイン状態になる
      *
