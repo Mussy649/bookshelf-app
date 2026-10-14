@@ -21,8 +21,6 @@ class BookValidationTest extends TestCase
         $response->assertSessionHasErrors([
             'title',
             'author',
-            'isbn',
-            'published_date',
             'genres',
         ]);
 

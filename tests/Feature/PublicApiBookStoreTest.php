@@ -65,6 +65,45 @@ class PublicApiBookStoreTest extends TestCase
         ]);
     }
 
+    public function test_public_api_can_create_book_without_isbn_and_published_date(): void
+    {
+        $user = User::factory()->create();
+
+        Sanctum::actingAs($user);
+
+        $genre = Genre::factory()->create();
+
+        $response = $this->postJson(
+            route('api.v1.books.store'),
+            [
+                'title' => 'API任意項目なし書籍',
+                'author' => 'テスト著者',
+                'isbn' => null,
+                'published_date' => null,
+                'description' => null,
+                'image_url' => null,
+                'genres' => [$genre->id],
+            ]
+        );
+
+        $response->assertStatus(201);
+
+        $bookId = $response->json('id');
+
+        $this->assertDatabaseHas('books', [
+            'id' => $bookId,
+            'user_id' => $user->id,
+            'title' => 'API任意項目なし書籍',
+            'isbn' => null,
+            'published_date' => null,
+        ]);
+
+        $this->assertDatabaseHas('book_genre', [
+            'book_id' => $bookId,
+            'genre_id' => $genre->id,
+        ]);
+    }
+
     public function test_public_api_returns_422_when_isbn_is_duplicated(): void
     {
         $user = User::factory()->create();
@@ -123,8 +162,6 @@ class PublicApiBookStoreTest extends TestCase
             ->assertJsonValidationErrors([
                 'title',
                 'author',
-                'isbn',
-                'published_date',
                 'genres',
             ]);
 
