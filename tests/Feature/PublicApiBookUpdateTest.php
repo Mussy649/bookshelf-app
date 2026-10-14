@@ -75,6 +75,46 @@ class PublicApiBookUpdateTest extends TestCase
         ]);
     }
 
+    public function test_public_api_can_update_book_without_isbn_and_published_date(): void
+    {
+        $user = User::factory()->create();
+
+        Sanctum::actingAs($user);
+
+        $genre = Genre::factory()->create();
+
+        $book = Book::factory()->create([
+            'user_id' => $user->id,
+            'isbn' => '9781234567897',
+            'published_date' => '2026-09-30',
+        ]);
+
+        $book->genres()->attach($genre->id);
+
+        $response = $this->putJson(
+            route('api.v1.books.update', $book),
+            [
+                'title' => 'API任意項目なし更新',
+                'author' => '更新後著者',
+                'isbn' => null,
+                'published_date' => null,
+                'description' => null,
+                'image_url' => null,
+                'genres' => [$genre->id],
+            ]
+        );
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('books', [
+            'id' => $book->id,
+            'title' => 'API任意項目なし更新',
+            'author' => '更新後著者',
+            'isbn' => null,
+            'published_date' => null,
+        ]);
+    }
+
     public function test_public_api_returns_422_when_updating_to_duplicate_isbn(): void
     {
         $user = User::factory()->create();

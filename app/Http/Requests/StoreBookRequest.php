@@ -25,8 +25,8 @@ class StoreBookRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'author' => ['required', 'string', 'max:255'],
-            'isbn' => ['required', 'digits:13', 'unique:books,isbn'],
-            'published_date' => ['required', 'date'],
+            'isbn' => ['nullable', 'digits:13', 'unique:books,isbn'],
+            'published_date' => ['nullable', 'date'],
             'description' => ['nullable', 'string', 'max:5000'],
             'image_url' => ['nullable', 'url', 'max:2048'],
             'genres' => ['required', 'array', 'min:1'],
@@ -43,11 +43,9 @@ class StoreBookRequest extends FormRequest
             'author.required' => '著者名は必須です。',
             'author.max' => '著者名は255文字以内で入力してください。',
 
-            'isbn.required' => 'ISBNは必須です。',
             'isbn.digits' => 'ISBNは13桁で入力してください。',
             'isbn.unique' => 'このISBNは既に登録されています。',
 
-            'published_date.required' => '出版日は必須です。',
             'published_date.date' => '有効な日付を入力してください。',
 
             'description.string' => '説明は文字列で入力してください。',
