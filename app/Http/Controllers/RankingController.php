@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Book;
+use Illuminate\View\View;
 
 class RankingController extends Controller
 {
-    public function index()
+    /**
+     * Display the top 10 books ranked by average review rating.
+     */
+    public function index(): View
     {
         $rankedBooks = Book::query()
             ->whereHas('reviews')

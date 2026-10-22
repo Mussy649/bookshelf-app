@@ -33,13 +33,42 @@ class ReadingPlanController extends Controller
 
         $query = $user->readingPlans()
             ->with('book')
-            ->orderBy('target_date');
+            ->orderBy('target_date')
+            ->orderBy('created_at')
+            ->orderBy('id');
 
-        if ($status !== null) {
-            $query->where('status', $status->value);
+        if ($status === ReadingPlanStatus::Expired) {
+            $query->where(function ($query) {
+                $query->where('status', ReadingPlanStatus::Expired->value)
+                    ->orWhere(function ($query) {
+                        $query->where(
+                            'status',
+                            ReadingPlanStatus::InProgress->value
+                        )->whereDate('target_date', '<', today());
+                    });
+            });
+        } elseif ($status === ReadingPlanStatus::InProgress) {
+            $query->where(
+                'status',
+                ReadingPlanStatus::InProgress->value
+            )->whereDate('target_date', '>=', today());
+        } elseif ($status === ReadingPlanStatus::Completed) {
+            $query->where(
+                'status',
+                ReadingPlanStatus::Completed->value
+            );
         }
 
         $readingPlans = $query->get();
+
+        $readingPlans->each(function (ReadingPlan $plan): void {
+            if (
+                $plan->status === ReadingPlanStatus::InProgress
+                && $plan->target_date->lt(today())
+            ) {
+                $plan->status = ReadingPlanStatus::Expired;
+            }
+        });
 
         return view(
             'reading-plans.index',
@@ -91,6 +120,13 @@ class ReadingPlanController extends Controller
 
         $plan->load('book');
 
+        if (
+            $plan->status === ReadingPlanStatus::InProgress
+            && $plan->target_date->lt(today())
+        ) {
+            $plan->status = ReadingPlanStatus::Expired;
+        }
+
         $readingPlan = $plan;
 
         return view(
@@ -108,7 +144,13 @@ class ReadingPlanController extends Controller
     ): RedirectResponse {
         $this->authorize('update', $plan);
 
-        $plan->update($request->validated());
+        $validated = $request->validated();
+
+        if ($plan->status === ReadingPlanStatus::Expired) {
+            $validated['status'] = ReadingPlanStatus::InProgress->value;
+        }
+
+        $plan->update($validated);
 
         return redirect()
             ->route('reading-plans.index')

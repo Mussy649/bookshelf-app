@@ -6,16 +6,18 @@ use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
 use App\Models\Book;
 use App\Models\Genre;
+use App\Services\BookIsbnLookupService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class BookController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of books with search, filtering, and sorting.
      */
     public function index(Request $request): View
     {
@@ -54,7 +56,6 @@ class BookController extends Controller
                 break;
 
             case 'latest':
-            case 'newest':
             default:
                 $query->latest();
                 break;
@@ -70,45 +71,27 @@ class BookController extends Controller
     }
 
     /**
-     * Search book information by ISBN using Google Books API.
+     * Search book information by ISBN using external book APIs.
      */
-    public function searchByIsbn(string $isbn): JsonResponse
-    {
-        $response = Http::get(
-            config('services.google_books.url'),
-            ['q' => "isbn:{$isbn}"]
-        );
+    public function searchByIsbn(
+        string $isbn,
+        BookIsbnLookupService $service
+    ): JsonResponse {
+        $result = $service->search($isbn);
 
-        if ($response->failed()) {
+        if ($result['status'] !== 200) {
             return response()->json([
-                'error' => '書籍情報の取得に失敗しました。',
-            ], 502);
+                'error' => $result['error'],
+            ], $result['status']);
         }
 
-        if ($response->json('totalItems', 0) === 0) {
-            return response()->json([
-                'error' => '該当する書籍が見つかりませんでした。',
-            ], 404);
-        }
-
-        $volumeInfo = $response->json('items.0.volumeInfo', []);
-
-        return response()->json([
-            'title' => $volumeInfo['title'] ?? null,
-            'author' => isset($volumeInfo['authors'])
-                ? implode(', ', $volumeInfo['authors'])
-                : null,
-            'isbn' => $isbn,
-            'published_date' => $volumeInfo['publishedDate'] ?? null,
-            'description' => $volumeInfo['description'] ?? null,
-            'image_url' => $volumeInfo['imageLinks']['thumbnail'] ?? null,
-        ]);
+        return response()->json($result['data']);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Display the book creation form.
      */
-    public function create()
+    public function create(): View
     {
         $genres = Genre::all();
 
@@ -116,18 +99,21 @@ class BookController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a book and its genre associations in a transaction.
      */
-    public function store(StoreBookRequest $request)
+    public function store(StoreBookRequest $request): RedirectResponse
     {
         $validated = $request->validated();
 
         $genreIds = $validated['genres'];
         unset($validated['genres']);
 
-        $book = $request->user()->books()->create($validated);
+        $book = DB::transaction(function () use ($request, $validated, $genreIds) {
+            $book = $request->user()->books()->create($validated);
+            $book->genres()->sync($genreIds);
 
-        $book->genres()->sync($genreIds);
+            return $book;
+        });
 
         return redirect()
             ->route('books.show', $book)
@@ -135,9 +121,9 @@ class BookController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified book with its genres and reviews.
      */
-    public function show(Book $book)
+    public function show(Book $book): View
     {
         $book->load([
             'genres',
@@ -151,9 +137,9 @@ class BookController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Display the book edit form for the authorized owner.
      */
-    public function edit(Book $book)
+    public function edit(Book $book): View
     {
         $this->authorize('update', $book);
 
@@ -164,9 +150,9 @@ class BookController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update a book and its genre associations in a transaction.
      */
-    public function update(UpdateBookRequest $request, Book $book)
+    public function update(UpdateBookRequest $request, Book $book): RedirectResponse
     {
         $this->authorize('update', $book);
 
@@ -175,9 +161,10 @@ class BookController extends Controller
         $genreIds = $validated['genres'];
         unset($validated['genres']);
 
-        $book->update($validated);
-
-        $book->genres()->sync($genreIds);
+        DB::transaction(function () use ($book, $validated, $genreIds) {
+            $book->update($validated);
+            $book->genres()->sync($genreIds);
+        });
 
         return redirect()
             ->route('books.show', $book)
@@ -185,9 +172,9 @@ class BookController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete the specified book after checking authorization.
      */
-    public function destroy(Book $book)
+    public function destroy(Book $book): RedirectResponse
     {
         $this->authorize('delete', $book);
 

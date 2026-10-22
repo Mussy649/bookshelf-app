@@ -66,5 +66,37 @@ class PublicApiBookShowTest extends TestCase
         $response->assertStatus(404);
     }
 
-    // Show系2テスト
+    public function test_public_api_book_detail_exposes_only_review_user_id_and_name(): void
+    {
+        $reviewer = User::factory()->create([
+            'name' => 'レビュー投稿者',
+            'email' => 'reviewer@example.com',
+        ]);
+
+        $book = Book::factory()->create();
+
+        Review::create([
+            'user_id' => $reviewer->id,
+            'book_id' => $book->id,
+            'rating' => 5,
+            'comment' => 'API公開情報の確認',
+        ]);
+
+        $response = $this->getJson(
+            route('api.v1.books.show', $book)
+        );
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('reviews.0.user.name', 'レビュー投稿者')
+            ->assertJsonMissingPath('reviews.0.user.email');
+
+        $this->assertSame(
+            [
+                'id' => $reviewer->id,
+                'name' => 'レビュー投稿者',
+            ],
+            $response->json('reviews.0.user')
+        );
+    }
 }

@@ -88,6 +88,7 @@
                     document.getElementById('isbn').value = isbn;
                     document.getElementById('description').value = data.description || '';
                     document.getElementById('image_url').value = data.image_url || '';
+                    document.getElementById('published_date').value = '';
 
                     if (data.published_date) {
                         const date = new Date(data.published_date);

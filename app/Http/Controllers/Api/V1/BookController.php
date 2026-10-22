@@ -7,14 +7,17 @@ use App\Http\Requests\Api\ApiBookIndexRequest;
 use App\Http\Requests\Api\StoreBookRequest;
 use App\Http\Requests\Api\UpdateBookRequest;
 use App\Models\Book;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class BookController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Return a paginated list of books with search and genre filtering.
      */
-    public function index(ApiBookIndexRequest $request)
+    public function index(ApiBookIndexRequest $request): JsonResponse
     {
         $perPage = $request->input('per_page', 10);
 
@@ -44,31 +47,34 @@ class BookController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a book and its genres in a database transaction.
      */
-    public function store(StoreBookRequest $request)
+    public function store(StoreBookRequest $request): JsonResponse
     {
         $validated = $request->validated();
 
         $genreIds = $validated['genres'];
         unset($validated['genres']);
 
-        $book = $request->user()->books()->create($validated);
-        $book->genres()->sync($genreIds);
+        $book = DB::transaction(function () use ($request, $validated, $genreIds) {
+            $book = $request->user()->books()->create($validated);
+            $book->genres()->sync($genreIds);
+            $book->load('genres');
 
-        $book->load('genres');
+            return $book;
+        });
 
         return response()->json($book, 201);
     }
 
     /**
-     * Display the specified resource.
+     * Return the specified book with genres and review information.
      */
-    public function show(Book $book)
+    public function show(Book $book): JsonResponse
     {
         $book->load([
             'genres',
-            'reviews.user',
+            'reviews.user:id,name',
         ]);
 
         $book->loadAvg('reviews', 'rating');
@@ -78,9 +84,9 @@ class BookController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update an authorized book and its genres in a transaction.
      */
-    public function update(UpdateBookRequest $request, Book $book)
+    public function update(UpdateBookRequest $request, Book $book): JsonResponse
     {
         $this->authorize('update', $book);
 
@@ -89,9 +95,10 @@ class BookController extends Controller
         $genreIds = $validated['genres'];
         unset($validated['genres']);
 
-        $book->update($validated);
-
-        $book->genres()->sync($genreIds);
+        DB::transaction(function () use ($book, $validated, $genreIds) {
+            $book->update($validated);
+            $book->genres()->sync($genreIds);
+        });
 
         $book->load('genres');
 
@@ -99,9 +106,9 @@ class BookController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete an authorized book and return HTTP 204 No Content.
      */
-    public function destroy(Book $book)
+    public function destroy(Book $book): Response
     {
         $this->authorize('delete', $book);
 

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -45,28 +44,43 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
+    /**
+     * Get the books registered by the user.
+     */
     public function books(): HasMany
     {
         return $this->hasMany(Book::class);
     }
 
+    /**
+     * Get the reviews posted by the user.
+     */
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
     }
 
+    /**
+     * Get the books favorited by the user.
+     */
     public function favoriteBooks(): BelongsToMany
     {
         return $this->belongsToMany(Book::class, 'favorites')
             ->withTimestamps();
     }
 
+    /**
+     * Get the reviews liked by the user.
+     */
     public function likedReviews(): BelongsToMany
     {
         return $this->belongsToMany(Review::class, 'review_likes')
             ->withTimestamps();
     }
 
+    /**
+     * Get the reading plans belonging to the user.
+     */
     public function readingPlans(): HasMany
     {
         return $this->hasMany(ReadingPlan::class);

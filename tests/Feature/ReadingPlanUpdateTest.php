@@ -80,6 +80,58 @@ class ReadingPlanUpdateTest extends TestCase
         );
     }
 
+    public function test_expired_plan_returns_to_in_progress_when_updated(): void
+    {
+        $user = User::factory()->create();
+        $book = Book::factory()->create();
+
+        $plan = $this->createPlan(
+            $user,
+            $book,
+            today()->subDays(2)->toDateString()
+        );
+
+        $plan->update([
+            'status' => ReadingPlanStatus::Expired,
+        ]);
+
+        $newTargetDate = today()->addDays(7)->toDateString();
+
+        $response = $this->actingAs($user)->put(
+            route('reading-plans.update', $plan),
+            [
+                'target_date' => $newTargetDate,
+            ]
+        );
+
+        $response
+            ->assertRedirect(route('reading-plans.index'))
+            ->assertSessionHas(
+                'success',
+                '読書計画を更新しました。'
+            );
+
+        $plan->refresh();
+
+        $this->assertSame(
+            $newTargetDate,
+            $plan->target_date->toDateString()
+        );
+
+        $this->assertSame(
+            ReadingPlanStatus::InProgress,
+            $plan->status
+        );
+
+        $this->assertNull($plan->completed_at);
+
+        $this->assertDatabaseHas('reading_plans', [
+            'id' => $plan->id,
+            'status' => ReadingPlanStatus::InProgress->value,
+            'target_date' => $newTargetDate,
+        ]);
+    }
+
     private function createPlan(
         User $user,
         Book $book,
