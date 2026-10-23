@@ -1,6 +1,7 @@
 # Bookshelf｜書籍レビューアプリ
 
 **「本を記録する」だけでなく、「見つける・評価する・読み終える」までを支援する書籍管理アプリケーションです。**
+
 Laravel 10を使用し、ブラウザ向けのWeb機能と外部連携向けのREST APIを実装しました。
 
 ## 1. アプリ概要
@@ -11,18 +12,18 @@ Laravel 10を使用し、ブラウザ向けのWeb機能と外部連携向けのR
 
 ## 2. 主な機能
 
-| 分類 | 実装内容 |
-| --- | --- |
-| 認証 | 会員登録、ログイン、ログアウト（Laravel Fortify） |
-| 書籍 | 一覧・詳細・登録・編集・削除、複数ジャンルの紐付け |
-| 検索 | タイトル・著者のキーワード検索、ジャンル絞り込み、ソート、条件を保持するページネーション |
-| ISBN検索 | ISBN-13から書籍情報を取得し、登録・編集フォームへ反映 |
-| レビュー | 星評価（1〜5）とコメントの投稿・編集・削除、最新順表示 |
-| お気に入り・いいね | 登録／解除のトグル、お気に入り一覧、レビューへのいいね |
-| ジャンル・ランキング | ジャンル管理、レビュー平均評価による書籍ランキング（上位10冊） |
-| 読書レポート | レビュー数、読了冊数、平均評価、評価分布、おすすめ集計など |
-| 読書計画・通知 | 読了予定日の管理、状態管理、期限に応じた通知、日次バッチ |
-| REST API | 書籍の一覧・詳細・登録・更新・削除、Sanctum認証と所有者認可 |
+| 分類                 | 実装内容                                                                                 |
+| -------------------- | ---------------------------------------------------------------------------------------- |
+| 認証                 | 会員登録、ログイン、ログアウト（Laravel Fortify）                                        |
+| 書籍                 | 一覧・詳細・登録・編集・削除、複数ジャンルの紐付け                                       |
+| 検索                 | タイトル・著者のキーワード検索、ジャンル絞り込み、ソート、条件を保持するページネーション |
+| ISBN検索             | ISBN-13から書籍情報を取得し、登録・編集フォームへ反映                                    |
+| レビュー             | 星評価（1〜5）とコメントの投稿・編集・削除、最新順表示                                   |
+| お気に入り・いいね   | 登録／解除のトグル、お気に入り一覧、レビューへのいいね                                   |
+| ジャンル・ランキング | ジャンル管理、レビュー平均評価による書籍ランキング（上位10冊）                           |
+| 読書レポート         | レビュー数、読了冊数、平均評価、評価分布、おすすめ集計など                               |
+| 読書計画・通知       | 読了予定日の管理、状態管理、期限に応じた通知、日次バッチ                                 |
+| REST API             | 書籍の一覧・詳細・登録・更新・削除、Sanctum認証と所有者認可                              |
 
 ## 3. 設計・実装で工夫した点
 
@@ -61,22 +62,32 @@ Laravel 10を使用し、ブラウザ向けのWeb機能と外部連携向けのR
 
 ## 4. 使用技術・構成
 
-| 区分 | 技術 |
-| --- | --- |
-| バックエンド | PHP 8.3系（Laravel Sail 8.3）、Laravel 10.x |
-| 認証・認可 | Laravel Fortify、Laravel Sanctum、Policy |
-| データベース | MySQL 8.4、Eloquent ORM |
-| フロントエンド | Blade、Vite、Tailwind CSS 3、`@tailwindcss/forms`、Alpine.js |
-| 開発環境 | Docker Desktop／Docker Compose、Laravel Sail、phpMyAdmin |
-| 品質管理 | PHPUnit、Laravel Pint、Git／GitHub |
-| 外部連携 | Google Books API、Open Library、openBD |
+| 区分           | 技術                                                            |
+| -------------- | --------------------------------------------------------------- |
+| バックエンド   | PHP 8.3.36（Laravel Sail 8.3）、Laravel 10.x                    |
+| 認証・認可     | Laravel Fortify、Laravel Sanctum、Policy                        |
+| データベース   | MySQL 8.4、Eloquent ORM                                         |
+| フロントエンド | Blade、Vite、Tailwind CSS 3、`@tailwindcss/forms`、Alpine.js    |
+| 開発環境       | Docker Desktop／Docker Compose、Laravel Sail、phpMyAdmin        |
+| 品質管理       | PHPUnit、Laravel Pint、Git／GitHub                              |
+| 外部連携       | Google Books API、Open Library、openBD                          |
 | 定期処理・通知 | Laravel Console Command、Task Scheduling、Database Notification |
 
 ### PHPバージョンの選定理由
 
 要件シートの「開発プロセス」では **PHP 8.5** が指定されています。一度 **PHP 8.5.10** で動作・テストを確認しましたが、テスト処理そのものは成功する一方、Laravel Sanctum 3の `HasApiTokens::createToken()` で **DEPRECATED警告** が発生しました。
 
-そこで、Laravel 10の公式対応範囲に含まれる **PHP 8.3** を実行環境として採用しました。`vendor` 配下のライブラリには手を加えず、PHP 8.3環境で **189件のテストがすべてPASS（661アサーション）、カバレッジ93.8%**、Laravel Pint 164ファイルPASSを確認しています。
+そこで、Laravel 10の公式対応範囲に含まれる **PHP 8.3** を実行環境として採用しました。`vendor` 配下のライブラリには手を加えず、セキュリティ修正版の **PHP 8.3.36** に更新した後も、**189件のテストがすべてPASS（661アサーション）、カバレッジ93.8%、Laravel Pint PASS** を確認しています。
+
+### 2026年10月のPHP緊急セキュリティ更新
+
+2026年10月21日に公表されたPHPの重大な脆弱性2件（CVE-2026-109618／CVE-2026-109619）への対策として、Dockerイメージを再ビルドし、稼働コンテナのPHPを **8.3.35 → 8.3.36** に更新しました。**2026年10月23日、`./vendor/bin/sail php -v` でPHP 8.3.36を確認済み**です。
+
+更新後にDockerの実行ユーザーとWSL上のファイル所有者のUIDが一致せず、一部テストが書き込み権限エラーとなりました。`.env` の `WWWUSER`／`WWWGROUP` を実際のUID／GIDに合わせ、コンテナを再作成することで解消しました。**更新後の再検証は189件PASS／661アサーション、カバレッジ93.8%、Laravel Pint PASSです。**
+
+なお、PHP 8.3系を使用する場合は **8.3.36以降** が必要です。Dockerイメージを更新しただけで完了とせず、実行コンテナ内の `php -v` で修正版が反映されていることを確認してください。再ビルド・再確認の手順は「6. 環境構築」の手順5に記載しています。
+
+参考：[PHP公式リリース情報](https://www.php.net/)／[PHPのセキュリティ勧告①](https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w)／[PHPのセキュリティ勧告②](https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp)
 
 ## 5. ER図
 
@@ -95,14 +106,14 @@ Laravel 10を使用し、ブラウザ向けのWeb機能と外部連携向けのR
 
 **既存リポジトリをクローンして構築します。新規に `laravel/laravel` プロジェクトを作成する必要はありません。**
 
-### ① リポジトリ取得
+### 手順1｜リポジトリ取得
 
 ```bash
 git clone https://github.com/Mussy649/bookshelf-app.git
 cd bookshelf-app
 ```
 
-### ② Composerパッケージのインストール
+### 手順2｜Composerパッケージのインストール
 
 Sail起動前のため、Docker上のComposerを使用します。
 
@@ -115,7 +126,9 @@ docker run --rm \
   laravelsail/php83-composer:latest composer install
 ```
 
-### ③ `.env` の作成・設定
+### 手順3｜`.env` の作成・設定
+
+初回構築時に以下を実行します。既に `.env` がある場合は上書きしないでください。
 
 ```bash
 cp .env.example .env
@@ -135,14 +148,92 @@ DB_PASSWORD=password
 
 `DB_HOST=mysql` はDocker Compose内のサービス名です。**`.env` はGitにコミットしないでください。**
 
-### ④ コンテナ起動・アプリケーションキー生成
+DockerとWSLのユーザーID・グループIDを一致させるため、次の設定も確認してください。`id -u` と `id -g` で自分の環境の数値を確認できます。下記は両方が `1000` の場合の例です。
 
 ```bash
-./vendor/bin/sail up -d
+id -u
+id -g
+```
+
+```dotenv
+# Laravel Sail user and group IDs (adjust for your environment)
+WWWUSER=1000
+WWWGROUP=1000
+```
+
+`.env.example` に設定項目がある場合も、**実際にDocker Composeが読み込む `.env` の値**を確認してください。UID／GIDが一致しないと、Laravelのログ・Bladeキャッシュ・PHPUnitキャッシュに書き込めない場合があります。
+
+### 手順4｜Google Books APIキーの取得・設定
+
+ISBN検索機能でGoogle Books APIを利用するため、APIキーを各自で取得し、`.env` に設定してください。
+
+#### 4-1. APIキーの取得
+
+1. [Google Cloud Console](https://console.cloud.google.com/) にGoogleアカウントでログインします。
+2. 新しいプロジェクトを作成するか、既存のプロジェクトを選択します。
+3. 「APIとサービス」→「ライブラリ」で「Books API」を検索し、有効にします。
+4. 「APIとサービス」→「認証情報」→「認証情報を作成」→「APIキー」を選択します。
+5. 作成されたAPIキーをコピーします。
+6. セキュリティのため、APIキーの「APIの制限」で「Books API」のみを許可することを推奨します。
+
+#### 4-2. `.env` への設定
+
+プロジェクト直下の `.env` を開き、次の項目を設定してください。
+
+```dotenv
+GOOGLE_BOOKS_API_KEY=取得したAPIキー
+```
+
+`取得したAPIキー` の部分を、ご自身で取得した実際のキーに置き換えてください。既に同じ項目がある場合は、その値を更新します。
+
+設定の反映は、**手順5のコンテナ起動後**に行います。書籍登録画面での動作確認は、**手順7**で実施してください。
+
+#### 4-3. 注意事項
+
+- APIキーは各自で取得・管理してください。
+- APIキーをREADMEやソースコードに直接記載しないでください。
+
+参考：[Google Books API公式ドキュメント](https://developers.google.com/books/docs/v1/using)
+
+### 手順5｜PHPイメージの更新・コンテナ起動・設定反映
+
+PHP 8.3.36以降のセキュリティ修正版を取り込むため、PHPアプリケーション用サービス `laravel.test` のDockerイメージをキャッシュなしでビルドします。**事前に手順3の `WWWUSER`／`WWWGROUP` を設定してください。**
+
+**初回構築の場合：**
+
+```bash
+docker compose build --pull --no-cache laravel.test
+docker compose up -d --no-build
+./vendor/bin/sail php -v
+```
+
+**既存の稼働環境でPHPだけを更新する場合：**
+
+```bash
+docker compose build --pull --no-cache laravel.test
+docker compose up -d --no-deps --no-build --force-recreate laravel.test
+./vendor/bin/sail php -v
+```
+
+どちらの場合も、**PHP 8.3.36以降の8.3系**が表示されることを確認してください。8.3.35以前が表示される場合は更新が未完了です。ベースイメージやPHPパッケージの提供状況を確認し、修正版が反映されるまで公開環境で稼働させないでください。
+
+**初回構築時のみ**、`.env` の `APP_KEY` が未設定の場合はアプリケーションキーを生成します。既存環境のPHP更新では再生成しないでください。
+
+```bash
 ./vendor/bin/sail artisan key:generate
 ```
 
-### ⑤ フロントエンド構築・DB初期化
+設定キャッシュをクリアします。
+
+```bash
+./vendor/bin/sail artisan config:clear
+```
+
+`config:clear` は、Google Books APIキーを含む設定変更後、古い設定キャッシュを破棄するためにも実行します。
+
+**注意：** 既存環境のPHP更新時に `docker compose down -v` や `migrate:fresh` は実行しないでください。既存データを失うおそれがあります。
+
+### 手順6｜フロントエンド構築・DB初期化
 
 ```bash
 ./vendor/bin/sail npm install
@@ -150,34 +241,36 @@ DB_PASSWORD=password
 ./vendor/bin/sail artisan migrate --seed
 ```
 
-`migrate --seed` は初期構築時に実施してください。**`migrate:fresh --seed` は既存データを削除するため、通常の動作確認では使用しません。**
+`migrate --seed` は初期構築時に実施してください。既存環境のPHP更新だけであれば、再実行は不要です。**`migrate:fresh --seed` は既存データを削除するため、通常の動作確認では使用しません。**
 
 開発中にViteのホットリロードを使用する場合は、別ターミナルで `./vendor/bin/sail npm run dev` を実行します。
 
-### ⑥ ブラウザで確認
+### 手順7｜ブラウザで確認
 
-| 画面 | URL |
-| --- | --- |
-| 書籍一覧（トップ） | http://localhost/books （`/` から遷移） |
-| 書籍ランキング | http://localhost/ranking |
+| 画面               | URL                                                 |
+| ------------------ | --------------------------------------------------- |
+| 書籍一覧（トップ） | http://localhost/books （`/` から遷移）             |
+| 書籍ランキング     | http://localhost/ranking                            |
 | 会員登録／ログイン | http://localhost/register ／ http://localhost/login |
-| お気に入り | http://localhost/favorites |
-| ジャンル管理 | http://localhost/genres |
-| マイ読書レポート | http://localhost/reports |
-| 読書計画 | http://localhost/reading-plans |
-| 通知一覧 | http://localhost/notifications |
-| phpMyAdmin | http://localhost:8080 |
+| お気に入り         | http://localhost/favorites                          |
+| ジャンル管理       | http://localhost/genres                             |
+| マイ読書レポート   | http://localhost/reports                            |
+| 読書計画           | http://localhost/reading-plans                      |
+| 通知一覧           | http://localhost/notifications                      |
+| phpMyAdmin         | http://localhost:8080                               |
+
+書籍登録画面でISBN検索を実行し、Google Books APIから書誌情報を取得できることを確認してください。Google Books APIが正常応答で該当なしの場合は、前述の順序でOpen Library、openBDを検索します。
 
 ### テスト用ユーザー
 
 Seederによるサンプルユーザーを使用できます（**開発環境専用**）。
 
-| ユーザー | メールアドレス |
-| --- | --- |
-| 山田太郎 | `yamada@example.com` |
-| 鈴木花子 | `suzuki@example.com` |
-| 田中一郎 | `tanaka@example.com` |
-| 佐藤美咲 | `sato@example.com` |
+| ユーザー | メールアドレス          |
+| -------- | ----------------------- |
+| 山田太郎 | `yamada@example.com`    |
+| 鈴木花子 | `suzuki@example.com`    |
+| 田中一郎 | `tanaka@example.com`    |
+| 佐藤美咲 | `sato@example.com`      |
 | 高橋健太 | `takahashi@example.com` |
 
 初期パスワードは共通で `password` です。初期データにはジャンル・書籍・レビュー・お気に入り等も含まれます。
@@ -201,13 +294,13 @@ git worktree add --detach ../bookshelf-basic basic-v1.0
 
 ベースURL：`http://localhost/api/v1`
 
-| メソッド | エンドポイント | 概要 | 認証 |
-| --- | --- | --- | --- |
-| GET | `/books` | 書籍一覧・検索・絞り込み・ページネーション | 不要 |
-| GET | `/books/{book}` | 書籍詳細・ジャンル・レビュー取得 | 不要 |
-| POST | `/books` | 書籍登録 | Sanctum必須 |
-| PUT / PATCH | `/books/{book}` | 書籍更新 | Sanctum＋所有者認可 |
-| DELETE | `/books/{book}` | 書籍削除 | Sanctum＋所有者認可 |
+| メソッド    | エンドポイント  | 概要                                       | 認証                |
+| ----------- | --------------- | ------------------------------------------ | ------------------- |
+| GET         | `/books`        | 書籍一覧・検索・絞り込み・ページネーション | 不要                |
+| GET         | `/books/{book}` | 書籍詳細・ジャンル・レビュー取得           | 不要                |
+| POST        | `/books`        | 書籍登録                                   | Sanctum必須         |
+| PUT / PATCH | `/books/{book}` | 書籍更新                                   | Sanctum＋所有者認可 |
+| DELETE      | `/books/{book}` | 書籍削除                                   | Sanctum＋所有者認可 |
 
 GET一覧では `keyword`（タイトル・著者・ISBN）、`genre`、`page`、`per_page` を指定できます。`per_page` は省略時10件、最大10件です。
 
@@ -262,13 +355,13 @@ Laravelのスケジュールには**毎日20:00（Asia/Tokyo）**の実行を設
 ./vendor/bin/sail pint --test
 ```
 
-**2026年10月の最終確認結果**
+**2026年10月23日のPHP 8.3.36更新後の確認結果**
 
-| 項目 | 結果 |
-| --- | --- |
-| PHPUnit | **189件PASS／661アサーション** |
-| コードカバレッジ | **93.8%**（目標80%以上） |
-| Laravel Pint | **164ファイルPASS** |
+| 項目               | 結果                                            |
+| ------------------ | ----------------------------------------------- |
+| PHPUnit            | **189件PASS／661アサーション**                  |
+| コードカバレッジ   | **93.8%**（目標80%以上）                        |
+| Laravel Pint       | **PASS**（自動修正なし）                        |
 | DBトランザクション | Web・APIの登録／更新でロールバックテスト4件PASS |
 
 通常のCRUDに加え、認証・認可（401／403）、バリデーション（422）、存在しないデータ（404）、外部API障害、状態遷移、DBのロールバックを検証しています。
@@ -279,16 +372,16 @@ Laravelのスケジュールには**毎日20:00（Asia/Tokyo）**の実行を設
 
 本案件は、概要要件から詳細仕様を設計し、クライアント役のPMに提案・確認しながら進める形式です。提出用の要件シートでは**元の要件・UIを残したまま、実装に対応する設計資料を追加・更新**しています。リンク先の閲覧には共有設定に応じたアクセス権限が必要です。
 
-| 資料（要件シート内） | 役割 |
-| --- | --- |
-| シート5-2 | Route・Controller・Action・Modelなどの基本設計 |
-| シート6-1／6-2 | Basic／Advancedの実装反映版UI（元UIは6-0に保存） |
-| シート7-1／7-2／7-3 | 実装用の機能要件、提供Bladeの修正記録、フラッシュメッセージ仕様 |
-| シート8 | フォーム・APIのバリデーションと日本語エラーメッセージ |
-| シート10-1／10-2 | 実装反映版テスト要件と189件のテストケース一覧（元要件は10-0に保存） |
-| シート12／13 | テーブル仕様書とER図 |
-| シート14 | APIエンドポイント・認証・レスポンスの詳細仕様 |
-| クライアント報告 | ヒアリング結果、確認事項、設計判断、進捗・実施結果を管理 |
+| 資料（要件シート内） | 役割                                                                |
+| -------------------- | ------------------------------------------------------------------- |
+| シート5-2            | Route・Controller・Action・Modelなどの基本設計                      |
+| シート6-1／6-2       | Basic／Advancedの実装反映版UI（元UIは6-0に保存）                    |
+| シート7-1／7-2／7-3  | 実装用の機能要件、提供Bladeの修正記録、フラッシュメッセージ仕様     |
+| シート8              | フォーム・APIのバリデーションと日本語エラーメッセージ               |
+| シート10-1／10-2     | 実装反映版テスト要件と189件のテストケース一覧（元要件は10-0に保存） |
+| シート12／13         | テーブル仕様書とER図                                                |
+| シート14             | APIエンドポイント・認証・レスポンスの詳細仕様                       |
+| クライアント報告     | ヒアリング結果、確認事項、設計判断、進捗・実施結果を管理            |
 
 シート2「あなたのタスク」で求められる**PMへのヒアリング記録は、コーチ側で用意された「クライアント報告」シートに集約**しています。追加・更新した資料は、提出用ブック内でマゼンタ色のシート見出しを目印にしています。
 
